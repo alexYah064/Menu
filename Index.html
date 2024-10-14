@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicación de Productos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .product-list, .user-list {
+            margin-top: 20px;
+        }
+        .token {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Aplicación de Productos</h1>
+</header>
+
+<div class="container">
+
+    <h2>Registro</h2>
+    <form id="registerForm">
+        <input type="text" id="registerName" placeholder="Nombre de usuario" required>
+        <input type="password" id="registerPassword" placeholder="Contraseña" required>
+        <button type="submit">Registrar</button>
+    </form>
+
+    <h2>Login</h2>
+    <form id="loginForm">
+        <input type="text" id="loginName" placeholder="Nombre de usuario" required>
+        <input type="password" id="loginPassword" placeholder="Contraseña" required>
+        <button type="submit">Iniciar sesión</button>
+    </form>
+
+    <div class="token">
+        <h2>Ingresar Token</h2>
+        <input type="text" id="tokenInput" placeholder="Token" required>
+        <button id="fetchUsersBtn">Obtener Usuarios</button>
+    </div>
+
+    <h2>Lista de Productos</h2>
+    <div class="product-list" id="productList">
+        <!-- Los productos se mostrarán aquí -->
+    </div>
+
+    <h2>Lista de Usuarios</h2>
+    <div class="user-list" id="userList">
+        <!-- Los usuarios se mostrarán aquí -->
+    </div>
+</div>
+
+<script>
+    const registerForm = document.getElementById('registerForm');
+    const loginForm = document.getElementById('loginForm');
+    const productList = document.getElementById('productList');
+    const userList = document.getElementById('userList');
+    const tokenInput = document.getElementById('tokenInput');
+    const fetchUsersBtn = document.getElementById('fetchUsersBtn');
+
+    registerForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const name = document.getElementById('registerName').value;
+        const password = document.getElementById('registerPassword').value;
+
+        try {
+            const response = await fetch('https://api-mascoticos.onrender.com/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ Name: name, Password: password }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert('Usuario registrado con éxito');
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const name = document.getElementById('loginName').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const response = await fetch('https://api-mascoticos.onrender.com/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ Name: name, Password: password }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                tokenInput.value = data.token; // Mostrar el token en el campo de entrada
+                alert('Inicio de sesión exitoso');
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    async function fetchProducts() {
+        try {
+            const response = await fetch('https://api-mascoticos.onrender.com/api/products'); // Asegúrate de que esta ruta esté definida
+            const products = await response.json();
+            productList.innerHTML = products.map(product => `<div>${product.Name} - $${product.Price}</div>`).join('');
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        }
+    }
+
+    fetchUsersBtn.addEventListener('click', async () => {
+        const token = tokenInput.value; // Obtener el token del campo de entrada
+        try {
+            const response = await fetch('https://api-mascoticos.onrender.com/api/users/user', {
+                headers: {
+                    'Authorization': `Bearer ${token}` // Usar el token para la autorización
+                }
+            });
+            const users = await response.json();
+            if (response.ok) {
+                userList.innerHTML = users.map(user => `<div>${user.Name}</div>`).join('');
+            } else {
+                alert(`Error: ${users.error}`); // Manejo de errores si hay problemas
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    });
+
+    // Llama a la función para obtener productos al cargar la página
+    fetchProducts();
+</script>
+
+</body>
+</html>
